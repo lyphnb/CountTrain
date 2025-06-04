@@ -53,7 +53,6 @@ public class HardActivity extends AppCompatActivity {
         operator = random.nextBoolean() ? '+' : '-';
 
         if (operator == '-' && num1 < num2) {
-            // 确保减法结果为正数
             int temp = num1;
             num1 = num2;
             num2 = temp;

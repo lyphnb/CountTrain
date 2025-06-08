@@ -1,6 +1,9 @@
 package com.example.counttrain;
 
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import android.content.Context;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
@@ -10,13 +13,13 @@ import android.widget.Toast;
 import java.util.Random;
 
 public class HardActivity extends AppCompatActivity {
-
     private TextView questionTextView;
     private EditText answerEditText;
     private Button submitBtn;
     private Button newQuestionBtn;
     private int num1, num2, correctAnswer;
     private char operator;
+    private StatsModel statsModel = new StatsModel();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -27,9 +30,8 @@ public class HardActivity extends AppCompatActivity {
         answerEditText = findViewById(R.id.answerEditText);
         submitBtn = findViewById(R.id.submitBtn);
         newQuestionBtn = findViewById(R.id.newQuestionBtn);
-
+        statsModel.loadStats(this);
         generateNewQuestion();
-
         submitBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -46,6 +48,12 @@ public class HardActivity extends AppCompatActivity {
         });
     }
 
+    @Override
+    protected void onPause() {
+        super.onPause();
+        statsModel.saveStats(this);
+    }
+
     private void generateNewQuestion() {
         Random random = new Random();
         num1 = 10 + random.nextInt(90); // 10-99
@@ -53,7 +61,6 @@ public class HardActivity extends AppCompatActivity {
         operator = random.nextBoolean() ? '+' : '-';
 
         if (operator == '-' && num1 < num2) {
-            // 确保减法结果为正数
             int temp = num1;
             num1 = num2;
             num2 = temp;
@@ -67,20 +74,93 @@ public class HardActivity extends AppCompatActivity {
         String userAnswerStr = answerEditText.getText().toString().trim();
 
         if (userAnswerStr.isEmpty()) {
-            Toast.makeText(this, "Please enter your answer", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "请输入答案", Toast.LENGTH_SHORT).show();
             return;
         }
 
         try {
             int userAnswer = Integer.parseInt(userAnswerStr);
+            boolean isCorrect = (userAnswer == correctAnswer);
+            statsModel.recordAnswer(isCorrect);
 
-            if (userAnswer == correctAnswer) {
-                Toast.makeText(this, "Good", Toast.LENGTH_SHORT).show();
+            if (isCorrect) {
+                Toast.makeText(this, "回答正确", Toast.LENGTH_SHORT).show();
             } else {
-                Toast.makeText(this, "Try again", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, "请再试一次", Toast.LENGTH_SHORT).show();
             }
+            if (statsModel.shouldShowStats()) {
+                showStatsDialog();
+            }
+
         } catch (NumberFormatException e) {
-            Toast.makeText(this, "Please enter a valid number", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "请输入有效数字", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private void showStatsDialog() {
+        new AlertDialog.Builder(this)
+                .setTitle("练习统计")
+                .setMessage(statsModel.getStats())
+                .setPositiveButton("确定", null)
+                .show();
+    }
+    private class StatsModel {
+        private int totalQuestions;
+        private int correctAnswers;
+        private long startTime;
+        private long totalTime;
+
+        public StatsModel() {
+            reset();
+        }
+
+        public void reset() {
+            totalQuestions = 0;
+            correctAnswers = 0;
+            startTime = System.currentTimeMillis();
+            totalTime = 0;
+        }
+
+        public void recordAnswer(boolean isCorrect) {
+            totalQuestions++;
+            if (isCorrect) {
+                correctAnswers++;
+            }
+            if (totalQuestions % 10 == 0) {
+                long endTime = System.currentTimeMillis();
+                totalTime = endTime - startTime;
+                startTime = endTime; // 重置开始时间
+            }
+        }
+
+        public String getStats() {
+            if (totalQuestions == 0) return "暂无统计数据";
+
+            float accuracy = (float) correctAnswers / totalQuestions * 100;
+            return String.format("总题数: %d\n正确数: %d\n正确率: %.1f%%\n最近10题用时: %d秒",
+                    totalQuestions,
+                    correctAnswers,
+                    accuracy,
+                    totalTime / 1000);
+        }
+
+        public boolean shouldShowStats() {
+            return totalQuestions % 10 == 0 && totalQuestions > 0;
+        }
+
+        public void saveStats(Context context) {
+            SharedPreferences prefs = context.getSharedPreferences("MathStats_Hard", Context.MODE_PRIVATE);
+            SharedPreferences.Editor editor = prefs.edit();
+            editor.putInt("totalQuestions", totalQuestions);
+            editor.putInt("correctAnswers", correctAnswers);
+            editor.apply();
+        }
+
+        public void loadStats(Context context) {
+            SharedPreferences prefs = context.getSharedPreferences("MathStats_Hard", Context.MODE_PRIVATE);
+            totalQuestions = prefs.getInt("totalQuestions", 0);
+            correctAnswers = prefs.getInt("correctAnswers", 0);
+            startTime = System.currentTimeMillis();
         }
     }
 }

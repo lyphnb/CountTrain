@@ -3,8 +3,8 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
     android:gravity="center"
+    android:orientation="vertical"
     android:padding="16dp"
     tools:context=".EasyActivity">
 
@@ -12,27 +12,27 @@
         android:id="@+id/questionTextView"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:textSize="24sp"
-        android:layout_marginBottom="32dp"/>
+        android:layout_marginBottom="32dp"
+        android:textSize="24sp" />
 
     <EditText
         android:id="@+id/answerEditText"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:inputType="number"
+        android:layout_marginBottom="16dp"
         android:hint="请输入答案"
-        android:layout_marginBottom="16dp"/>
+        android:inputType="number" />
 
     <Button
         android:id="@+id/submitBtn"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="提交"
-        android:layout_marginBottom="16dp"/>
+        android:layout_marginBottom="16dp"
+        android:text="提交" />
 
     <Button
         android:id="@+id/newQuestionBtn"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="新的问题"/>
+        android:text="新的问题" />
 </LinearLayout>
